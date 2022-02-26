@@ -1,0 +1,256 @@
+// This source code is subject to the terms of the Mozilla Public License 2.0 at https://mozilla.org/MPL/2.0/
+// © TomiLotila
+
+
+
+//@version=4
+study(title="Cross", overlay=true, shorttitle="dollar cost average")
+
+showStrength = input(false,title="showStrength")
+showTrend  = input(true,title="showSTrend")
+
+
+//strength
+
+
+
+
+
+//MACD
+
+//Calculating
+fast_ma = ema(close, 12)
+slow_ma = ema(close, 26)
+macd = fast_ma - slow_ma
+signal = ema(macd, 9)
+
+
+// SHC calcultion
+
+len=10
+o=ema(open,len)
+c=ema(close,len)
+hSHC=ema(high,len)
+l=ema(low,len)
+
+haclose = (o+hSHC+l+c)/4
+haopen = 0.0
+haopenclose = haopen[1] + haclose[1]
+haopen2 = na(haopen[1]) ? (o + c)/2 : (haopenclose) / 2
+haopen := haopen2
+hahigh = max (hSHC, max(haopen,haclose))
+halow = min (l, min(haopen,haclose))
+
+len2=10
+o2=ema(haopen, len2)
+c2=ema(haclose, len2)
+h2=ema(hahigh, len2)
+l2=ema(halow, len2)
+
+derivaatta = ((c2-o2)/(h2-l2))
+
+derivaatta2 = derivaatta - derivaatta[1]
+
+
+//-------------------------------------
+
+
+// ma50 strength
+ma50 = sma(close, 50)
+ma50result = (close/ma50)
+strongMA50 = ma50result <0.7
+weakMA50 =ma50result > 1.3
+//plot(showStrength and strongMA50 ? 5 : na, style = plot.style_cross, color= color.green , linewidth = 3, title="Cross")
+//plot(showStrength and weakMA50 ? 5 : na,style = plot.style_cross, color= color.red , linewidth = 3, title="Cross")
+//plotshape(strongMA50[1] and not strongMA50, title="Confirmed", text="Buy", color=color.green, style=shape.labeldown, location=location.abovebar, size=size.small, textcolor=color.black)
+//plotshape(weakMA50[1] and not weakMA50, title="Confirmed", text="Sell", color=color.red, style=shape.labelup, location=location.belowbar, size=size.small, textcolor=color.black) 
+
+
+
+// SHC strength 
+
+strongSHC =  derivaatta <= -0.4
+weakSHC =  derivaatta >= 0.4
+
+
+//plot(showStrength and strongSHC ? 4 : na, style = plot.style_cross, color= color.green , linewidth = 3, title="Cross")
+//plot(showStrength and weakSHC ? 4 : na,style = plot.style_cross, color= color.red , linewidth = 3, title="Cross")
+//plotshape(strongSHC[1] and not strongSHC, title="Confirmed", text="Buy", color=color.green, style=shape.labeldown, location=location.abovebar, size=size.small, textcolor=color.black)
+//plotshape(weakSHC[1] and not weakSHC, title="Confirmed", text="Sell", color=color.red, style=shape.labelup, location=location.belowbar, size=size.small, textcolor=color.black) 
+
+
+
+
+
+// rsi strength
+rsiCalc = rsi(close, 14)
+strongRSI = rsiCalc <30
+weakRSI = rsiCalc >70
+//plot(showStrength and strongRSI ? 2 : na, style = plot.style_cross, color= color.green , linewidth = 3, title="Cross")
+//plot(showStrength and weakRSI ? 2 : na,style = plot.style_cross, color= color.red , linewidth = 3, title="Cross")
+//plotshape(strongRSI[1] and not strongRSI, title="Confirmed", text="Buy", color=color.green, style=shape.labeldown, location=location.abovebar, size=size.small, textcolor=color.black)
+//plotshape(weakRSI[1] and not weakRSI, title="Confirmed", text="Sell", color=color.red, style=shape.labelup, location=location.belowbar, size=size.small, textcolor=color.black) 
+
+/////////////////////// BB strength
+
+
+
+mult =2.0
+basis = sma(close, 20)
+dev = mult * stdev(close, 20)
+upper = basis + dev
+lower = basis - dev
+
+strongBB = close < lower
+weakBB = close > upper
+//plot(showStrength and strongBB ? 6 : na, style = plot.style_cross, color= color.green , linewidth = 3, title="Cross")
+//plot(showStrength and weakBB ? 6 : na,style = plot.style_cross, color= color.red , linewidth = 3, title="Cross")
+//plotshape(strongBB[1] and not strongBB, title="Confirmed", text="Buy", color=color.green, style=shape.labeldown, location=location.abovebar, size=size.small, textcolor=color.black)
+//plotshape(weakBB[1] and not weakBB, title="Confirmed", text="Sell", color=color.red, style=shape.labelup, location=location.belowbar, size=size.small, textcolor=color.black) 
+
+
+
+//col1 = iff( strongDIV, color.green, iff( weakDIV, color.red, color.yellow))
+//plot(1, color= col1 , linewidth = 3, title="Cross")
+
+
+////////////////////// money flow index 
+lengthMFI = 14
+srcMFI = hlc3
+upperMFI = sum(volume * (change(srcMFI) <= 0 ? 0 : srcMFI), lengthMFI)
+lowerMFI = sum(volume * (change(srcMFI) >= 0 ? 0 : srcMFI), lengthMFI)
+_rsi(upperMFI, lowerMFI) =>
+    if lowerMFI == 0
+        100
+    if upperMFI == 0
+        0
+	100.0 - (100.0 / (1.0 + upperMFI / lowerMFI))
+mf = _rsi(upperMFI, lowerMFI)
+
+strongMFI = mf <= 20
+weakMFI = mf >= 80
+//plot(showStrength and strongMFI ? 3 : na, style = plot.style_cross, color= color.green , linewidth = 3, title="Cross")
+//plot(showStrength and weakMFI ? 3 : na,style = plot.style_cross, color= color.red , linewidth = 3, title="Cross")
+//plotshape(strongMFI[1] and not strongMFI, title="Confirmed", text="Buy", color=color.green, style=shape.labeldown, location=location.abovebar, size=size.small, textcolor=color.black)
+//plotshape(weakMFI[1] and not weakMFI, title="Confirmed", text="Sell", color=color.red, style=shape.labelup, location=location.belowbar, size=size.small, textcolor=color.black) 
+
+
+
+/////////////////////       normalized macd
+sma = 12
+lma = 21
+tsp = 9
+np = 50
+h=true
+docol = false
+dofill=false
+type = 1
+
+sh = type == 1 ? ema(close,sma)  
+ : type == 2 ? wma(close, sma)
+ : sma(close, sma)
+
+lon=type == 1 ? ema(close,lma) 
+ : type == 2 ? wma(close, lma)
+ : sma(close, lma)
+
+ratio = min(sh,lon)/max(sh,lon)
+Mac = (iff(sh>lon,2-ratio,ratio)-1)
+MacNorm = ((Mac-lowest(Mac, np)) /(highest(Mac, np)-lowest(Mac, np)+.000001)*2)- 1
+MacNorm2 = iff(np<2,Mac,MacNorm)
+Trigger = wma(MacNorm2, tsp)
+Hist = (MacNorm2-Trigger)
+Hist2 = Hist>1?1:Hist<-1?-1:Hist
+
+
+// nmacd strength
+strongNMACD = Trigger <-0.90
+weakNMACD = Trigger > 0.90
+//plot(showStrength and strongNMACD ? 1 : na, style = plot.style_cross, color= color.green , linewidth = 3, title="Cross")
+//plot(showStrength and weakNMACD ? 1 : na,style = plot.style_cross, color= color.red , linewidth = 3, title="Cross")
+
+//plotshape(strongNMACD[1] and not strongNMACD, title="Confirmed", text="Buy", color=color.green, style=shape.labeldown, location=location.abovebar, size=size.small, textcolor=color.black)
+//plotshape(weakNMACD[1] and not weakNMACD, title="Confirmed", text="Sell", color=color.red, style=shape.labelup, location=location.belowbar, size=size.small, textcolor=color.black) 
+lastStrongNMACD = false
+lastStrongNMACD := lastStrongNMACD[1]
+lastStrongMFI = false
+lastStrongMFI := lastStrongMFI[1]
+lastStrongBB = false
+lastStrongBB := lastStrongBB[1]
+lastStrongRSI = false
+lastStrongRSI := lastStrongRSI[1]
+lastStrongSHC = false
+lastStrongSHC := lastStrongSHC[1]
+//lastStrongMA50 = true
+//lastStrongMA50 := lastStrongMA50[1]
+
+counterBuy = 0
+if (strongNMACD)
+    counterBuy:= counterBuy + 1
+    lastStrongNMACD := true
+if (strongMFI)
+    counterBuy:= counterBuy + 1
+    lastStrongMFI := true
+if (strongBB)
+    counterBuy:= counterBuy + 1
+    lastStrongBB := true
+if (strongRSI)
+    counterBuy:= counterBuy + 1
+    lastStrongRSI := true
+if (strongSHC)
+    counterBuy:= counterBuy + 1
+    lastStrongSHC := true
+if (strongMA50)
+    counterBuy:= counterBuy + 1
+  //  lastStrongMA50 := true
+    
+plotshape(counterBuy[1] >=2 and counterBuy <2 , title="Confirmed", text="B", color=color.green, style=shape.labelup, location=location.bottom, size=size.small, textcolor=color.black)
+
+counterSell = 0
+if (weakNMACD)
+    counterSell:= counterSell + 1
+    lastStrongNMACD := false
+if (weakMFI)
+    counterSell:= counterSell + 1
+    lastStrongMFI := false
+if (weakBB)
+    counterSell:= counterSell + 1
+    lastStrongBB := false
+if (weakRSI)
+    counterSell:= counterSell + 1
+    lastStrongRSI := false
+if (weakSHC)
+    counterSell:= counterSell + 1
+    lastStrongSHC := false
+if (weakMA50)
+    counterSell:= counterSell + 1
+       
+
+plotshape(counterSell[1] >=2 and counterSell <2, title="Confirmed", text="S", color=color.red, style=shape.labelup, location=location.bottom, size=size.small, textcolor=color.black)
+
+megaStrongBuy = lastStrongRSI and lastStrongBB  and lastStrongSHC and lastStrongNMACD and lastStrongMFI  and counterBuy == 0
+megaStrongSell = not lastStrongRSI and not lastStrongBB  and not lastStrongSHC and not lastStrongNMACD and not lastStrongMFI  and counterSell == 0
+
+
+plotshape( megaStrongBuy[1] ? false : megaStrongBuy, title="Confirmed", text="B", color=color.blue, style=shape.labelup, location=location.bottom, size=size.small, textcolor=color.black)
+plotshape(megaStrongSell[1] ? false : megaStrongSell, title="Confirmed", text="S", color=color.orange, style=shape.labelup, location=location.bottom, size=size.small, textcolor=color.black)
+
+
+//MACD line
+colMACD = color.red
+counterDiff = counterBuy - counterSell
+colStength = color.gray
+if (counterDiff < 0)
+    colStength := abs(counterDiff) >= 2 ? color.maroon : color.red
+if (counterDiff > 0)
+    colStength := abs(counterDiff) >= 2 ? color.green : color.lime
+
+
+
+if (macd - signal >= 0) 
+    colMACD := color.green
+
+plot(close - close*0.3 ,style = plot.style_circles, color= colStength , linewidth = 3)
+
+
+
